@@ -16,12 +16,22 @@ class Plotter:
         ##self.df = df 
     
     def box_plot_outlier_check(self, df):
+        """Creates box-plots of all desired columns
+
+        Args:
+            df
+        """        
         cols = ['Air temperature [K]', 'Process temperature [K]', 'Rotational speed [rpm]', 'Torque [Nm]', 'Tool wear [min]']
         for col in cols:
             fig = px.box(df, y=col)
             fig.show()     
 
     def hist_plotter(self, df):
+        """Creates histograms of all desired columns
+
+        Args:
+            df
+        """        
         cols = ['Air temperature [K]', 'Process temperature [K]', 'Rotational speed [rpm]', 'Torque [Nm]', 'Tool wear [min]']
         fig, axes = plt.subplots(nrows=len(cols), ncols=1, figsize=(12, 8))  # Create a single subplot for each column
 
@@ -33,6 +43,11 @@ class Plotter:
         plt.show()
 
     def qq_plotter(self, df):
+        """Creates qq-plots of all desired columns
+
+        Args:
+            df 
+        """        
         cols = ['Air temperature [K]', 'Process temperature [K]', 'Rotational speed [rpm]', 'Torque [Nm]', 'Tool wear [min]']
         for col in cols:
             fig, ax = plt.subplots()
@@ -43,6 +58,11 @@ class Plotter:
             plt.show()
             
     def d_agostino_k2_test(self, df):
+        """ Perfomes D'Agostino's K^2 Test on the desired columns
+
+        Args:
+            df
+        """        
         cols = ['Air temperature [K]', 'Process temperature [K]', 'Rotational speed [rpm]', 'Torque [Nm]', 'Tool wear [min]']
         for col in cols:
             stat, p = normaltest(self.df[col], nan_policy='omit')
@@ -62,6 +82,11 @@ class Plotter:
             plt.show()
 
     def test_log(self, df):
+        """Performes a log transformation on the desired column and plots a new histogram, but does not make the change permanent
+
+        Args:
+            df
+        """        
         cols = ['Rotational speed [rpm]']
         for col in cols:
             log_column = df[col].map(lambda i: np.log(i) if i > 0 else 0)
@@ -69,6 +94,10 @@ class Plotter:
             t.legend()
 
     def test_boxcox(self, df):
+        """Performes a Box-Cox transformation on the desired column and plots a new histogram, but does not make the change permanent
+        Args:
+            df 
+        """        
         cols = ['Rotational speed [rpm]']
         for col in cols:
             boxcox_column = df[col]
@@ -105,3 +134,263 @@ class Plotter:
         vif_data = vif_data[vif_data['Variable'] != 'const']
 
         return vif_data
+    
+    def calculate_operating_ranges(self, df):
+        cols = ['Air temperature [K]', 'Process temperature [K]', 'Rotational speed [rpm]', 'Torque [Nm]', 'Tool wear [min]']
+    # Ensure columns exist in the DataFrame
+        for col in cols:
+            if col not in cols:
+                raise ValueError(f"Column '{col}' is not in the DataFrame.")
+        
+        # Create a summary table
+        summary_table = df[cols].agg(['min', 'max', 'mean', 'std', 'median']).T
+        summary_table.rename(columns={
+            'min': 'Minimum',
+            'max': 'Maximum',
+            'mean': 'Mean',
+            'std': 'Standard Deviation',
+            'median': 'Median'
+        }, inplace=True)
+        summary_table.index.name = 'Variable'
+        
+        return summary_table
+    
+    def count_true_values(self, df):
+        cols = ['Machine failure']
+        for col in cols:
+            if col not in cols:
+                raise ValueError(f"Column '{col}' does not exist in the DataFrame.")
+            true_count = df[col].sum()
+            return true_count
+
+    def plot_failure_ranges_with_comparison(self, df, failure_col, specific_failure_name):
+        """
+        Visualize and compare the ranges of operational parameters during general 
+        machine failures and a specific type of failure.
+
+        Parameters:
+        - df (pd.DataFrame): The original DataFrame containing all failures.
+        - specific_failure_df (pd.DataFrame): The DataFrame filtered for a specific type of failure.
+        - specific_failure_name (str): Name of the specific failure type (e.g., "Tool Wear Failure").
+        """
+        # Filter the DataFrame for rows where machine failures occurred
+        failure_df = df[df['Machine failure'] == True]
+        specific_failure_df = failure_df[failure_df[failure_col] == True]
+
+        # Columns to analyze
+        columns_to_plot = [
+            'Rotational speed [rpm]', 
+            'Torque [Nm]', 
+            'Process temperature [K]', 
+            'Air temperature [K]'
+        ]
+
+        # Set up the plot grid
+        plt.figure(figsize=(16, 12))
+        for i, col in enumerate(columns_to_plot, start=1):
+            plt.subplot(2, 2, i)
+
+            # Plot general machine failure distribution
+            sns.histplot(
+                failure_df[col], kde=True, bins=20, color='skyblue', 
+                edgecolor='black', label='General Failures', alpha=0.6
+            )
+
+            # Overlay specific failure distribution
+            sns.histplot(
+                specific_failure_df[col], kde=True, bins=20, color='orange', 
+                edgecolor='black', label=specific_failure_name, alpha=0.6
+            )
+
+            plt.title(f'Distribution of {col} During Failures', fontsize=14)
+            plt.xlabel(col, fontsize=12)
+            plt.ylabel('Frequency', fontsize=12)
+            plt.legend()
+            plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+        # Adjust layout for the plots
+        plt.tight_layout()
+        plt.show()
+
+    def plot_failure_ranges_with_comparison_to_all(
+        self, df, failure_col_1, specific_failure_name_1, 
+        failure_col_2, specific_failure_name_2, 
+        failure_col_3, specific_failure_name_3, 
+        failure_col_4, specific_failure_name_4, 
+        failure_col_5, specific_failure_name_5
+        ):
+        """
+        Visualise and compare the ranges of operational parameters during general 
+        machine failures and a specific type of failure.
+
+        Parameters:
+        - df (pd.DataFrame): The original DataFrame containing all failures.
+        - specific_failure_df (pd.DataFrame): The DataFrame filtered for a specific type of failure.
+        - specific_failure_name (str): Name of the specific failure type (e.g., "Tool Wear Failure").
+        """
+        # Filter the DataFrame for rows where machine failures occurred
+        failure_df = df[df['Machine failure'] == True]
+        specific_failure_df_1 = failure_df[failure_df[failure_col_1] == True]
+        specific_failure_df_2 = failure_df[failure_df[failure_col_2] == True]
+        specific_failure_df_3 = failure_df[failure_df[failure_col_3] == True]
+        specific_failure_df_4 = failure_df[failure_df[failure_col_4] == True]
+        specific_failure_df_5 = failure_df[failure_df[failure_col_5] == True]
+
+        # Columns to analyze
+        columns_to_plot = [
+            'Rotational speed [rpm]', 
+            'Torque [Nm]', 
+            'Process temperature [K]', 
+            'Air temperature [K]'
+        ]
+
+        # Set up the plot grid
+        plt.figure(figsize=(16, 12))
+        for i, col in enumerate(columns_to_plot, start=1):
+            plt.subplot(2, 2, i)
+
+            # Plot general machine failure distribution
+            sns.histplot(
+                failure_df[col], kde=True, bins=20, color='skyblue', 
+                edgecolor='black', label='All Failures', alpha=0.6
+            )
+
+            # Overlay specific failure distribution
+            sns.histplot(
+                specific_failure_df_1[col], kde=True, bins=20, color='orange', 
+                edgecolor='black', label=specific_failure_name_1, alpha=0.6
+            )
+
+            sns.histplot(
+                specific_failure_df_2[col], kde=True, bins=20, color='red', 
+                edgecolor='black', label=specific_failure_name_2, alpha=0.6
+            )
+
+            sns.histplot(
+                specific_failure_df_3[col], kde=True, bins=20, color='green', 
+                edgecolor='black', label=specific_failure_name_3, alpha=0.6
+            )
+
+            sns.histplot(
+                specific_failure_df_4[col], kde=True, bins=20, color='pink', 
+                edgecolor='black', label=specific_failure_name_4, alpha=0.6
+            )
+            sns.histplot(
+                specific_failure_df_5[col], kde=True, bins=20, color='yellow', 
+                edgecolor='black', label=specific_failure_name_5, alpha=0.6
+            )
+
+    def rot_speed_failure_comparison(self, df, failure_col_1, specific_failure_name_1, failure_col_2, specific_failure_name_2, failure_col_3, specific_failure_name_3, failure_col_4, specific_failure_name_4, failure_col_5, specific_failure_name_5,):
+        """
+        Visualise and compare the ranges of operational parameters during general 
+        machine failures and a specific type of failure.
+
+        Parameters:
+        - df (pd.DataFrame): The original DataFrame containing all failures.
+        - specific_failure_df (pd.DataFrame): The DataFrame filtered for a specific type of failure.
+        - specific_failure_name (str): Name of the specific failure type (e.g., "Tool Wear Failure").
+        """
+        # Filter the DataFrame for rows where machine failures occurred
+        failure_df = df[df['Machine failure'] == True]
+        specific_failure_df_1 = failure_df[failure_df[failure_col_1] == True]
+        specific_failure_df_2 = failure_df[failure_df[failure_col_2] == True]
+        specific_failure_df_3 = failure_df[failure_df[failure_col_3] == True]
+        specific_failure_df_4 = failure_df[failure_df[failure_col_4] == True]
+        specific_failure_df_5 = failure_df[failure_df[failure_col_5] == True]
+
+        # Columns to analyze
+        columns_to_plot = [
+            'Rotational speed [rpm]', 
+        ]
+
+        # Set up the plot grid
+        plt.figure(figsize=(16, 12))
+        for i, col in enumerate(columns_to_plot, start=1):
+            plt.subplot(2, 2, i)
+
+            # Plot general machine failure distribution
+            sns.histplot(
+                failure_df[col], kde=True, bins=20, color='skyblue', 
+                edgecolor='black', label='All Failures', alpha=0.6
+            )
+
+            # Overlay specific failure distribution
+            sns.histplot(
+                specific_failure_df_1[col], kde=True, bins=20, color='orange', 
+                edgecolor='black', label=specific_failure_name_1, alpha=0.6
+            )
+
+            sns.histplot(
+                specific_failure_df_2[col], kde=True, bins=20, color='red', 
+                edgecolor='black', label=specific_failure_name_2, alpha=0.6
+            )
+
+            sns.histplot(
+                specific_failure_df_3[col], kde=True, bins=20, color='green', 
+                edgecolor='black', label=specific_failure_name_3, alpha=0.6
+            )
+
+            sns.histplot(
+                specific_failure_df_4[col], kde=True, bins=20, color='pink', 
+                edgecolor='black', label=specific_failure_name_4, alpha=0.6
+            )
+            sns.histplot(
+                specific_failure_df_5[col], kde=True, bins=20, color='yellow', 
+                edgecolor='black', label=specific_failure_name_5, alpha=0.6
+            )
+
+
+
+            plt.title(f'Distribution of {col} During Failures', fontsize=14)
+            plt.xlabel(col, fontsize=12)
+            plt.ylabel('Frequency', fontsize=12)
+            plt.legend()
+            plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+        # Adjust layout for the plots
+        plt.tight_layout()
+        plt.show()
+
+        
+def plot_failure_histogram(df_twf, df_hdf, df_pwf, df_osf, df_rnf, total_failures):
+    """Creates histogram pltos of all dataframes input
+
+    Args:
+        df_twf : Dataframe of only Tool wear failure entries
+        df_hdf : Dataframe of only Heat dissapation failure entries
+        df_pwf : Dataframe of only Power failure entries
+        df_osf : Dataframe of only Heat overstrain failure entries
+        df_rnf : Dataframe of only Random failure entries
+        total_failures : A dataframe of all failure entries
+    """    
+    # Prepare data for the histogram
+    failure_types = ['Tool Wear Failure', 'Heat Dissipation Failure', 'Power Failure', 
+                     'Heat Overstrain Failure', 'Random Failure']
+    failure_counts = [
+        df_twf.shape[0], 
+        df_hdf.shape[0], 
+        df_pwf.shape[0], 
+        df_osf.shape[0], 
+        df_rnf.shape[0]
+    ]
+    failure_percentages = [round(count / total_failures * 100, 2) for count in failure_counts]
+    
+    # Create a figure and axis
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    # Plot the histogram
+    ax.bar(failure_types, failure_counts, color='skyblue', edgecolor='black')
+
+    # Add labels and title
+    for i, count in enumerate(failure_counts):
+        ax.text(i, count + 1, f'{count} ({failure_percentages[i]}%)', ha='center', fontsize=12)
+
+    ax.set_xlabel('Failure Type', fontsize=14)
+    ax.set_ylabel('Number of Failures', fontsize=14)
+    ax.set_title('Number of Failures by Type', fontsize=16)
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+    
+    # Show the plot
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.show()

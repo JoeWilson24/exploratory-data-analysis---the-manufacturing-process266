@@ -50,3 +50,13 @@ class DataFrameInfo:
             "Column Data Types": self.describe_columns(),
             "Null Values": self.count_nulls()
         }
+    
+    def count_true_values(self, df):
+        """Count the number of true values in a specific column"""
+        cols = ['Machine failure']
+        for col in cols:
+            if col not in cols:
+                raise ValueError(f"Column '{col}' does not exist in the DataFrame.")
+            true_count = df[col].sum()
+            return true_count
+    
