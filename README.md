@@ -8,13 +8,26 @@ The project uses classes to: extract data from the cloud, transform the data wit
 
 https://github.com/JoeWilson24/exploratory-data-analysis---the-manufacturing-process266.git
 
+Packages to download: 
+
+pandas, mumpy, plotly, matplotlib, statsmodels, seaborn, scipy.
+
 ## Usage instructions
 
 ## File structure
 
-📦.vscode
- ┗ 📜settings.json
-
+📦DataAnalysisProject
+ ┣ 📜.DS_Store
+ ┣ 📜.gitignore
+ ┣ 📜EDA.ipynb
+ ┣ 📜README.md
+ ┣ 📜credentials.yaml
+ ┣ 📜dataframeinfoclass.py
+ ┣ 📜dataframetransformclass.py
+ ┣ 📜datatransformclass.py
+ ┣ 📜db_utils.py
+ ┣ 📜failure_data.csv
+ ┗ 📜plotterclass.py
 
  ## Things learned along the way:
 
